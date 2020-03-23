@@ -30,6 +30,10 @@ io.on('connection', function (socket) {
       queue.push(userId);
     }
   });
+
+  socket.on('message', (message) => {
+    socket.to(rooms[socket.id]).emit('message', message);
+  });
 });
 
 module.exports = server;
