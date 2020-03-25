@@ -2,38 +2,87 @@ const app = require('express')();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const randomstring = require('randomstring');
+const {
+  CONNECTION,
+  DISCONNECTION,
+  LOGIN,
+  MESSAGE,
+  CHAT_START,
+  TYPING,
+  CHAT_END,
+  LEAVE_ROOM
+} = require('./constances');
 
 const queue = [];
-const rooms = {};
-const allUsers = {};
-const allNames = {};
+const roomsById = {};
+const usersById = {};
+const namesById = {};
 
-io.on('connection', function (socket) {
-  socket.on('login', name => {
-    const userId = socket.id;
+io.on(CONNECTION, function (socket) {
+  const userId = socket.id;
 
-    allUsers[userId] = socket;
-    allNames[userId] = name;
+  socket.on(LOGIN, (name) => {
+    usersById[userId] = socket;
+    namesById[userId] = name;
 
+    FindPeer();
+  });
+
+  socket.on(TYPING, () => {
+    const roomId = roomsById[userId];
+
+    socket.to(roomId).broadcast.emit(TYPING);
+  });
+
+  socket.on(MESSAGE, (message) => {
+    const roomId = roomsById[userId];
+
+    socket.to(roomId).broadcast.emit(MESSAGE, message);
+  });
+
+  socket.on(LEAVE_ROOM, () => {
+    const roomId = roomsById[userId];
+
+    socket.to(roomId).broadcast.emit(CHAT_END);
+    socket.leave(roomId);
+    delete roomsById[userId];
+    FindPeer();
+  });
+
+  socket.on(DISCONNECTION, function(){
+    const roomId = roomsById[userId];
+
+    if (roomId) {
+      socket.to(roomId).broadcast.emit(CHAT_END);
+      socket.leave(roomId);
+      delete roomsById[userId];
+    } else {
+      const index = queue.indexOf(userId);
+
+      queue.splice(index, 1);
+    }
+    delete usersById[userId];
+    delete namesById[userId];
+  });
+
+  function FindPeer () {
     if (queue.length) {
       const peerId = queue.pop();
-      const peer = allUsers[peerId];
+      const peer = usersById[peerId];
       const roomId = randomstring.generate();
+
+      roomsById[peerId] = roomId;
+      roomsById[userId] = roomId;
 
       peer.join(roomId);
       socket.join(roomId);
-      rooms[peerId] = roomId;
-      rooms[userId] = roomId;
-      peer.emit('chat start', { name: allNames[userId], roomId });
-      socket.emit('chat start', { name: allNames[peerId], roomId } );
+
+      peer.emit(CHAT_START, namesById[userId]);
+      socket.emit(CHAT_START, namesById[peerId]);
     } else {
       queue.push(userId);
     }
-  });
-
-  socket.on('message', (message) => {
-    socket.to(rooms[socket.id]).emit('message', message);
-  });
+  }
 });
 
 module.exports = server;
