@@ -61,6 +61,7 @@ io.on(CONNECTION, (socket) => {
 
       queue.splice(index, 1);
     }
+
     delete usersById[userId];
     delete namesById[userId];
   });
