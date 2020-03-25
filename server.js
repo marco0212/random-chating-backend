@@ -18,7 +18,7 @@ const roomsById = {};
 const usersById = {};
 const namesById = {};
 
-io.on(CONNECTION, function (socket) {
+io.on(CONNECTION, (socket) => {
   const userId = socket.id;
 
   socket.on(LOGIN, (name) => {
@@ -49,7 +49,7 @@ io.on(CONNECTION, function (socket) {
     FindPeer();
   });
 
-  socket.on(DISCONNECTION, function(){
+  socket.on(DISCONNECTION, () => {
     const roomId = roomsById[userId];
 
     if (roomId) {
@@ -65,7 +65,7 @@ io.on(CONNECTION, function (socket) {
     delete namesById[userId];
   });
 
-  function FindPeer () {
+  function FindPeer() {
     if (queue.length) {
       const peerId = queue.pop();
       const peer = usersById[peerId];
