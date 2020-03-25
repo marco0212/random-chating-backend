@@ -11,7 +11,7 @@ const {
   TYPING,
   CHAT_END,
   LEAVE_ROOM
-} = require('./constances');
+} = require('./constants');
 
 const queue = [];
 const roomsById = {};
