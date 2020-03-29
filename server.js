@@ -25,7 +25,7 @@ io.on(CONNECTION, (socket) => {
     usersById[userId] = socket;
     namesById[userId] = name;
 
-    FindPeer();
+    findPeer();
   });
 
   socket.on(TYPING, () => {
@@ -46,7 +46,7 @@ io.on(CONNECTION, (socket) => {
     socket.to(roomId).broadcast.emit(CHAT_END);
     socket.leave(roomId);
     delete roomsById[userId];
-    FindPeer();
+    findPeer();
   });
 
   socket.on(DISCONNECTION, () => {
@@ -66,7 +66,7 @@ io.on(CONNECTION, (socket) => {
     delete namesById[userId];
   });
 
-  function FindPeer() {
+  function findPeer() {
     if (queue.length) {
       const peerId = queue.pop();
       const peer = usersById[peerId];
